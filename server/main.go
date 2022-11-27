@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 type Todo struct {
@@ -18,6 +19,13 @@ func main() {
 	fmt.Println("Hello World")
 
 	app := fiber.New()
+
+	app.Use(cors.New(
+		cors.Config{
+			AllowOrigins: "http://127.0.0.1:5173",
+			AllowHeaders: "Origin, Content-Type, Accept",
+		},
+	))
 
 	todos := []Todo{}
 
@@ -50,6 +58,23 @@ func main() {
 		for i, todo := range todos {
 			if todo.ID == id {
 				todos[i].Done = true
+				break
+			}
+		}
+
+		return c.JSON(todos)
+	})
+
+	app.Delete("/api/todos/:id/delete", func(c *fiber.Ctx) error {
+		id, err := c.ParamsInt("id")
+
+		if err != nil {
+			return c.Status(401).SendString("Invalid ID")
+		}
+
+		for i, todo := range todos {
+			if todo.ID == id {
+				todos = append(todos[:i], todos[i+1:]...)
 				break
 			}
 		}
